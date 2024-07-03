@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+	<style type="text/css">
+		body {
+			background-color: #F5F5DC;	
+		}
+			
+		.button-start {
+			-moz-box-shadow:inset 0px 1px 0px 0px #fed897;
+			-webkit-box-shadow:inset 0px 1px 0px 0px #fed897;
+			box-shadow:inset 0px 1px 0px 0px #fed897;
+			background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #f6b33d), color-stop(1, #d29105) );
+			background:-moz-linear-gradient( center top, #f6b33d 5%, #d29105 100% );
+			filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f6b33d', endColorstr='#d29105');
+			background-color:#f6b33d;
+			-webkit-border-top-left-radius:42px;
+			-moz-border-radius-topleft:42px;
+			border-top-left-radius:42px;
+			-webkit-border-top-right-radius:42px;
+			-moz-border-radius-topright:42px;
+			border-top-right-radius:42px;
+			-webkit-border-bottom-right-radius:42px;
+			-moz-border-radius-bottomright:42px;
+			border-bottom-right-radius:42px;
+			-webkit-border-bottom-left-radius:42px;
+			-moz-border-radius-bottomleft:42px;
+			border-bottom-left-radius:42px;
+			text-indent:-1px;
+			border:1px solid #eda933;
+			display:inline-block;
+			color:#ffffff;
+			font-family:Arial;
+			font-size:18px;
+			font-weight:bold;
+			font-style:normal;
+			height:60px;
+			line-height:60px;
+			width:98px;
+			text-decoration:none;
+			text-align:center;
+			text-shadow:1px 1px 0px #cd8a15;
+		}
+		.button-start:hover {
+			background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #d29105), color-stop(1, #f6b33d) );
+			background:-moz-linear-gradient( center top, #d29105 5%, #f6b33d 100% );
+			filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#d29105', endColorstr='#f6b33d');
+			background-color:#d29105;
+		}.button-start:active {
+			position:relative;
+			top:1px;
+		}
+
+		#mainDiv {
+			float: left;
+			margin: 20px;
+		}			
+			
+		#sideDiv {
+			float: left;
+			margin: 20px;	
+		}
+	</style>
+		
+	<script type="text/javascript" src="NinjaSoftwareLib.js"></script>
+	<script type="text/javascript" src="SlagalicaEngine.js"></script>
+	<script type="text/javascript" src="TwoDMatrix.js"></script>
+	
+	<script type="text/javascript">
+		var imageNo = 0;
+		var urlImageNo = ninjaSoftware.url.getParameterValue("imageNo");
+		if (urlImageNo !== "") {
+			imageNo = parseInt(urlImageNo);	
+		}
+		
+		var noTilesX = 4;
+		var noTilesY = 3;
+			
+		if (imageNo === 1) {
+			noTilesX = 3;
+			noTilesY = 4;	
+		}
+		else if (imageNo === 2) {
+			noTilesX = 3;
+			noTilesY = 3;
+		}
+		
+		var gameEngine = null;
+		var noImagesLoaded = 0;
+	
+		function mainImageLoad() {
+			initEngine();
+		}
+	
+		function whiteImageLoad() {
+			initEngine();
+		}
+	
+		function initEngine() {
+			noImagesLoaded++;
+			if (noImagesLoaded === 2) {
+				var image = document.getElementById("mainImage");
+				var whiteImage = document.getElementById("whiteImage");
+	
+				gameEngine = GameEngine({
+					container: document.getElementById("mainDiv"),
+					canvas: document.getElementById("mainCanvas"),
+					noTilesX: noTilesX,
+					noTilesY: noTilesY,
+					image: image,
+					whiteImage: whiteImage
+				});
+			
+				gameEngine.init();
+				gameEngine.drawTiles();
+			}	
+		}
+		
+		var shuffleInterval = function () {
+			if (intervalCounter <= 20) {
+				gameEngine.shuffle();
+				intervalCounter++;
+			}
+			else {
+				clearInterval(timerId);
+				gameEngine.isClickable = true;
+			}
+		};
+			
+		var intervalCounter = 0;
+		var timerId = 0;
+		function shuffle() {
+				var shuffleDiv = document.getElementById("shuffleDiv");
+				shuffleDiv.style.visibility = "hidden";
+			
+				var successDiv = document.getElementById("successDiv");
+				successDiv.style.visibility = "hidden";
+				
+			intervalCounter = 0;
+			timerId = setInterval(shuffleInterval, 100);
+		}
+		
+		document.addEventListener("tilesAreOnInitialPosition", 
+			function () {
+				var shuffleDiv = document.getElementById("shuffleDiv");
+				shuffleDiv.style.visibility = "visible";
+			
+				var successDiv = document.getElementById("successDiv");
+				successDiv.style.visibility = "visible";
+			
+				gameEngine.isClickable = false;
+				gameEngine.drawImage();
+			}, 
+			false);
+	</script>
+  </head>
+  <body>
+	<div>
+		<h1>SLAGALICA (alpha)</h1>
+	</div>
+		
+	<div id="mainDiv">
+		<canvas id="mainCanvas" width="500" height="400"></canvas>
+	</div>
+	<div id="sideDiv">
+		<div id="shuffleDiv">
+			<a href="javascript:shuffle();" class="button-start">START</a>
+		</div>
+		<div id="successDiv" style="visibility: hidden;">
+			<h1>BRAVO!!!!<h1>
+		</div>
+		<div>
+			<a href="index.html?imageNo=0"><img alt="pic0" src="image0.jpg" width="80" height="60" /></a>
+			<br />
+			<a href="index.html?imageNo=1"><img alt="pic0" src="image1.jpg" width="60" height="80" /></a>
+			<br />
+			<a href="index.html?imageNo=2"><img alt="pic0" src="image2.jpg" width="60" height="60" /></a>
+		</div>
+	</div>
+
+	<div style="visibility: hidden;">
+		<img id="mainImage" onload="mainImageLoad();"></img>
+		<img id="whiteImage" onload="whiteImageLoad();"></img>
+	</div>
+	<script type="text/javascript">
+		var image = document.getElementById("mainImage");
+		image.src = "image" + imageNo + ".jpg";
+
+		var whiteImage = document.getElementById("whiteImage");
+		whiteImage.src = "bijela.jpg";
+	</script>
+  </body>
+</html>
+

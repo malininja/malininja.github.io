@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style type="text/css">
+    html * {
+      font-size: 1.1em !important;
+    }
+
+    span {
+      display: inline-block;
+      width: 220px;
+    }
+  </style>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+  <script src="./rijeci.js"></script>
+
+  <script type="text/javascript">
+    function safeApply($scope, fn) {
+      var phase = $scope.$root.$$phase;
+
+      if (phase == '$apply' || phase == '$digest') {
+        if (fn && (typeof (fn) === 'function')) {
+          fn();
+        }
+      }
+      else {
+        $scope.$apply(fn);
+      }
+    };
+
+    var data = rijeci;
+
+    function getOne() {
+      var index = Math.floor(Math.random() * data.length);
+      return data[index];
+    }
+
+    function get10() {
+      var res = [];
+
+      while (res.length < 10) {
+        var item = getOne();
+        if (!res.includes(item)) res.push(item);
+      }
+
+      return res;
+    }
+
+    function removeLetters(word) {
+      var style = 'style="color:red;"';
+      return word
+        .replace(/nj/g, "11") // makni 'nj' da 'j' ne zezne kasniju zamjenu
+        //.replace(/č|ć|dž|đ/gi, "_")
+        .replace(/č|ć/g, `<b ${style}>c</b>`)
+        .replace(/Č|Ć/g, `<b ${style}>C</b>`)
+        .replace(/ije|je/g, `<b ${style}>_</b>`)
+        .replace(/dž|đ/g, `<b ${style}>d</b>`)
+        .replace(/Dž|Đ/g, `<b ${style}>D</b>`)
+        .replace(/11/g, "nj") // vrati 'nj'
+        ;
+    }
+
+    var app = angular.module("hrvatski", []);
+
+    app.controller("cdController", ["$scope", "$sce", function ($scope, $sce) {
+      $scope.datas = [];
+
+      $scope.setNewData = function () {
+        var fn = function () {
+          var words = get10();
+          var newDatas = [];
+
+          words.forEach(word => {
+            var replaced = $sce.trustAsHtml(removeLetters(word));
+            newDatas.push({ original: word, replaced, color: 'white' });
+          });
+
+          $scope.datas = newDatas;
+        };
+
+        safeApply($scope, fn);
+      }
+
+      $scope.setNewData();
+
+      $scope.validate = function () {
+        var data;
+        var result;
+        var isValid = false;
+
+        for (var i = 0; i < $scope.datas.length; i++) {
+          data = $scope.datas[i];
+          isValid = data.original === data.result;
+
+          if (isValid) {
+            data.color = 'green';
+          } else {
+            data.color = 'red';
+          }
+        }
+      }
+    }]);
+  </script>
+</head>
+
+<body>
+</body>
+<div ng-app="hrvatski">
+  <div ng-controller="cdController">
+    <div ng-repeat="data in datas">
+      <span ng-bind-html="data.replaced"></span>
+      =
+      <input ng-model="data.result" ng-style="{'background-color':data.color}" />
+    </div>
+
+    <input type="button" value="provjeri" ng-click="validate()" </div> <input type="button" value="ponovno"
+      ng-click="setNewData()" </div> </div> </html>

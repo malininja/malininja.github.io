@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript">
+		
+		window.onload = function () {
+			var colors = ["red", "blue", "yellow", "green", "DeepPink"];			
+			var interval = 10;
+		
+			var elementIdCounter = 0;	
+			var elementType = 0;
+			var elementTypeMax = 2;
+			
+			var elements = [];
+		
+			function getColor() {
+				var colorIndex = Math.floor(Math.random() * colors.length);
+				if (colorIndex >= colors.length) {
+					colorIndex = colors.length - 1;	
+				}
+				
+				return colors[colorIndex];
+			}
+					
+			function draw(element) {
+				ctx.beginPath();
+				
+				if (element.elementType === 0) {
+					ctx.arc(element.x, element.y, element.radius, 0, 2*Math.PI);
+				} else if (element.elementType === 1) {
+					var x = element.x - element.radius / 2;
+					var y = element.y - element.radius / 2;
+					ctx.rect(x, y, element.radius, element.radius);
+				} else if (element.elementType === 2) {
+					ctx.moveTo(element.x, element.y - element.radius);
+					ctx.lineTo(element.x - element.radius, element.y + element.radius);
+					ctx.lineTo(element.x + element.radius, element.y + element.radius);
+					ctx.closePath();
+				}
+
+				ctx.strokeStyle = element.color;
+				ctx.stroke();
+			
+			}
+					
+			function triggerDraw(element) {
+				return function () {
+					draw(element);
+					
+					if (element.radius < 150) {
+						element.radius++;
+					}
+					else {
+						clearInterval(element.intervalId);
+					}
+				}
+			}
+			
+			var isFirstHit = true;
+			
+			function drawElement () {
+				if (isFirstHit === true) {
+					var body = document.getElementById("body");
+					var title = document.getElementById("div_title");
+					body.removeChild(title);
+					isFirstHit = false;
+				}
+				
+				var x = Math.floor(Math.random() * maxX - 1);
+				var y = Math.floor(Math.random() * maxY - 1);
+		
+				if (elementType === elementTypeMax) {
+					elementType = 0;
+				} else {
+					elementType++;
+				}
+				
+				var color = getColor();
+				var elementId = elementIdCounter++;
+				var element = {
+					elementId: elementId,
+					intervalId: null,
+					x: x,
+					y: y,
+					radius: 2,
+					color: color,
+					elementType: elementType
+				};		
+		
+				elements[elementId] = element;
+		
+				elements[elementId].intervalId = setInterval(triggerDraw(element), interval);
+			}
+			
+			function playSound (soundNumber) {
+				var noOfSounds = 23;
+			
+				var fileNumber = soundNumber % noOfSounds;
+				var fileName = "sounds/" + fileNumber + ".ogg";
+			
+				var audioPlayer = document.getElementById('audioPlayer');
+				audioPlayer.children[0].src = fileName;
+				audioPlayer.load();
+			}
+			
+			document.onkeydown = function (event) {
+				drawElement();
+				
+				if ((event.keyCode >= 48 && event.keyCode <= 57) ||
+					(event.keyCode >= 65 && event.keyCode <= 90)) {
+					var code = event.keyCode;
+			
+					if (code >= 65) {
+						code = code - 7;
+					}
+			
+					code = code - 48;
+
+					playSound(code);
+				}
+			};
+			
+			document.onclick = function () {
+				drawElement();
+				 
+				var soundNo = Math.floor(Math.random() * 100);
+				playSound(soundNo);
+			};
+		};
+
+		</script>
+	</head>	
+	<body id="body">
+		<div id="div_title">
+			<h1>PRESS A KEY!!!<h2>
+		</div>
+		<audio id="audioPlayer" autoplay autobuffer controls hidden="hidden">
+			<source src="sounds/0.mp3">
+		</audio>
+	
+		<div id="mainDiv">
+			<canvas id="mainCanvas" width="100" height="80">Your browser doesn't support HTML5</canvas>
+		</div>
+	
+		<script type="text/javascript">			
+				var maxX = window.innerWidth - 30;
+				var maxY = window.innerHeight - 30;
+				
+				var canvas = document.getElementById("mainCanvas");
+				canvas.width = maxX;
+				canvas.height = maxY;
+				var ctx = canvas.getContext("2d");
+		</script>
+	</body>
+</html>

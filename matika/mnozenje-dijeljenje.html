@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+
+  <style>
+    html * {
+      font-size: 1.1em !important;
+    }
+  </style>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+
+  <script type="text/javascript">
+    function safeApply($scope, fn) {
+      var phase = $scope.$root.$$phase;
+
+      if (phase == '$apply' || phase == '$digest') {
+        if (fn && (typeof (fn) === 'function')) {
+          fn();
+        }
+      }
+      else {
+        $scope.$apply(fn);
+      }
+    };
+
+    function getPairs(noOfPairs) {
+      var output = [];
+      var pair;
+
+      for (var i = 0; i < noOfPairs; i++) {
+        pair = {
+          a: Math.ceil(Math.random() * 10),
+          b: Math.ceil(Math.random() * 10),
+        };
+
+        output.push(pair);
+      }
+
+      return output;
+    }
+
+    var app = angular.module("matikaApp", []);
+
+    app.controller("matikaController", ["$scope", function ($scope) {
+      $scope.datas = [{ a: 1, b: 2 }];
+
+      $scope.setNewNumbers = function () {
+        var fn = function () {
+          var pairs = getPairs(10);
+          var i;
+          var newDatas = [];
+
+          for (i = 0; i < 5; i++) {
+            newDatas.push({ a: pairs[i].a, b: pairs[i].b, operator: '*', color: 'white' });
+          }
+
+          for (i = 5; i < 10; i++) {
+            newDatas.push({ a: pairs[i].a * pairs[i].b, b: pairs[i].b, operator: '/', color: 'white' });
+          }
+
+          $scope.datas = newDatas;
+        };
+
+        safeApply($scope, fn);
+      }
+
+      $scope.setNewNumbers();
+
+      $scope.validate = function () {
+        var data;
+        var result;
+        var isValid = false;
+
+        for (var i = 0; i < $scope.datas.length; i++) {
+          data = $scope.datas[i];
+
+          if (data.operator === '*') {
+            result = data.a * data.b;
+          } else {
+            result = data.a / data.b;
+          }
+
+          try {
+            isValid = result === parseInt(data.result);
+          } catch (e) {
+
+          }
+
+          if (isValid) {
+            data.color = 'green';
+          } else {
+            data.color = 'red';
+          }
+        }
+      }
+    }]);
+  </script>
+</head>
+
+<body>
+</body>
+<div ng-app="matikaApp">
+  <div ng-controller="matikaController">
+    <div ng-repeat="data in datas">
+      <input class="number" ng-model="data.a" readonly />
+      <span>{{ data.operator }}</span>
+      <input class="number" ng-model="data.b" readonly />
+      <span>=</span>
+      <input class="number" ng-model="data.result" ng-style="{'background-color':data.color}" />
+    </div>
+
+    <input type="button" value="provjeri" ng-click="validate()" </div> <input type="button" value="ponovno"
+      ng-click="setNewNumbers()" </div> </div> </html>

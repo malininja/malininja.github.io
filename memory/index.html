@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<title>Ninja memory</title>
+		<script type="text/javascript" src="res/easeljs-0.7.1.min.js"></script>
+		
+		<script type="text/javascript">
+			var canvas;
+			var stage;
+			var squareSide = 95;
+			var squareOutline = 5;
+			var max_rgb_color_value = 255;
+			var gray = createjs.Graphics.getRGB(20, 20, 20);
+			var placementArray = [];
+			var tileClicked;
+			
+			var timeAllowable;
+			var totalMatchesPossible;
+			var matchesFound;
+			var txt;
+			var matchesFoundText;
+			var squares;
+			
+			var imagePrefix = "res/";
+			var imagesGames = ["beatbuddy.png", "dust.png", "fez.gif", "smb.png", "smc.png", "superfrog.png"];
+			var imagesMatej = ["zarulja.png", "decec.png", "decec_plese.png", "duh.png", "jezik_nos.png", "kos.png"];
+			var imagesSofija = ["balerina.png", "duh_sofija.png", "kuharica.png", "leptiri.png", "ribe.png", "spuzvabob.png"];
+			var images = [];
+			var availableImages;
+			
+			function gameInit() {
+				var columns = 4;
+
+				if (images.length === 18) {
+					columns = 6;
+				}
+
+				var rows = images.length / columns * 2;
+				var squarePadding = 10;
+				
+				availableImages = images;
+				timeAllowable = 30 * Math.pow((images.length / 6), 1.5);
+				
+				canvas = document.getElementById("myCanvas");
+				stage = new createjs.Stage(canvas);
+				
+				var numberOfTiles = rows * columns;
+				setPlacementArray(numberOfTiles);
+
+				createjs.Ticker.addEventListener("tick", handleTick);
+				
+				squares = [];
+				
+				for (var i = 0; i < numberOfTiles; i++) {
+					var placement = getRandomPlacement(placementArray);
+					if (i % 2 === 0) {
+						var img = randomImg();
+					}
+					
+					var square = drawSquare(gray);
+					square.img = img;
+					square.x = (squareSide + squarePadding) * (placement % columns);
+					square.y = 80 + (squareSide + squarePadding) * Math.floor(placement / columns);
+					stage.addChild(square);
+					square.addEventListener("click", handleOnPress);
+					square.cache(0, 0, squareSide + squarePadding, squareSide + squarePadding);
+					
+					squares.push(square);
+				}
+				
+				matchesFound = 0;
+				
+				txt = new createjs.Text(timeAllowable, "30px Monospace", "#000");
+				txt.textBaseline = "top";
+				txt.x = 0;
+				txt.y = 0;
+				stage.addChild(txt);
+				
+				totalMatchesPossible = numberOfTiles / 2;
+				matchesFoundText = new createjs.Text("Pairs Found: " + matchesFound + "/" + totalMatchesPossible, "30px Monospace", "#000");
+				matchesFoundText.textBaseline = "top";
+				matchesFoundText.x = 0;
+				matchesFoundText.y = 40;
+				stage.addChild(matchesFoundText);
+				
+				stage.update();
+			}
+			
+			function randomImg() {
+				var img = new Image();
+				
+				var imageIndex = Math.floor(Math.random() * availableImages.length);
+				img.src = imagePrefix + availableImages[imageIndex];
+				availableImages.splice(imageIndex, 1);
+				
+				return img;
+			}
+			
+			function handleTick() {
+				if (!createjs.Ticker.getPaused()) {
+					secondsLeft = Math.floor(timeAllowable - createjs.Ticker.getTime() / 1000);
+					txt.text = secondsLeft;
+					
+					if (secondsLeft <= 0) {
+						gameOver(false);
+					}
+					
+					stage.update();
+				}
+			}
+			
+			function gameOver(win) {
+				createjs.Ticker.setPaused(true);
+				
+				for (i = 0; i < squares.length; i++) {
+					squares[i].graphics.beginBitmapFill(squares[i].img).rect(squareOutline, squareOutline, squareSide, squareSide);
+					squares[i].removeEventListener("click", handleOnPress);
+					
+					if (win === false) {
+						squares[i].uncache();
+					}
+				}
+				
+				var replayParagraph = document.getElementById("replay");
+				replayParagraph.innerHTML = "<a href='' onclick='replay();'>Play Again?</a>";
+				
+				if (win === true) {
+					matchesFoundText.text = "You win!";
+				} else {
+					txt.text = secondsLeft + "... Game Over";
+				}
+			}
+			
+			function handleOnPress(event) {
+				var tile = event.target;
+				
+				tile.graphics.beginBitmapFill(tile.img).rect(squareOutline, squareOutline, squareSide, squareSide);
+				
+				if (!!tileClicked === false) {
+					tileClicked = tile;
+					tileClicked.updateCache("source-overlay");
+				} else {
+					if (tileClicked.img === tile.img && 
+						tileClicked !== tile) {
+							tileClicked.visible = false;
+							tile.visible = false;
+							
+							matchesFound++;
+							matchesFoundText.text = "Pairs Found: " + matchesFound + "/" + totalMatchesPossible;
+							
+							if (matchesFound === totalMatchesPossible) {
+								gameOver(true);
+							}
+					} else {
+						tileClicked.graphics.beginFill(gray).
+											 rect(squareOutline, squareOutline, squareSide, squareSide);
+					}
+
+					tileClicked.updateCache("source-overlay");
+					tile.updateCache("source-overlay");
+					
+					tileClicked = tile;
+				}
+				
+				stage.update();
+			}
+			
+			function getRandomPlacement(placementArray) {
+				randomNumber = Math.floor(Math.random() * placementArray.length);
+				return placementArray.splice(randomNumber, 1)[0];
+			}
+			
+			function setPlacementArray(numberOfTiles) {
+				for (i = 0; i < numberOfTiles; i++) {
+					placementArray.push(i);
+				}
+			}
+			
+			function drawSquare(color) {
+				var shape = new createjs.Shape();
+				var graphics = shape.graphics;
+				graphics.setStrokeStyle(squareOutline);
+				graphics.beginStroke(gray);
+				graphics.beginFill(color);				
+				graphics.rect(squareOutline, squareOutline, squareSide, squareSide);
+				
+				return shape;
+			}
+			
+			function randomColor() {
+				var red = Math.floor(Math.random() * max_rgb_color_value);
+				var green = Math.floor(Math.random() * max_rgb_color_value);
+				var blue = Math.floor(Math.random() * max_rgb_color_value);
+				
+				return createjs.Graphics.getRGB(red, green, blue);
+			}
+			
+			function replay() {
+				window.location.href = window.location.href;
+			}
+			
+			function init() {				
+				if (document.getElementById("checkbox_igre").checked) {
+					for (var i = 0; i < imagesGames.length; i++) {
+						images.push(imagesGames[i]);
+					}
+				}
+				
+				if (document.getElementById("checkbox_matej").checked) {
+					for (var i = 0; i < imagesMatej.length; i++) {
+						images.push(imagesMatej[i]);
+					}
+				}
+				
+				if (document.getElementById("checkbox_sofija").checked) {
+					for (var i = 0; i < imagesSofija.length; i++) {
+						images.push(imagesSofija[i]);
+					}
+				}
+
+				if (images.length === 0) {
+					return;
+				}
+				
+				document.getElementById("selection").style.display = "none";
+				document.getElementById("game").style.display = "inline";
+				
+				gameInit();
+			}
+			
+			function changeCheckbox(id) {
+				var chk = document.getElementById(id);
+				chk.checked = !chk.checked;
+			}
+		</script>
+	</head>
+	<body>
+		<div id="selection">
+			<div>
+				<input type="checkbox" value="igre" id="checkbox_igre" />
+				<a onclick="changeCheckbox('checkbox_igre');">
+					<img src="res/smb.png" alt="igre" height="200" width="200" />
+				</a>
+			</div>
+			<div>
+				<input type="checkbox" value="Matej" id="checkbox_matej" />
+				<a onclick="changeCheckbox('checkbox_matej');">
+					<img src="res/matej.png" alt="matej" height="200" width="200" />
+				</a>
+			</div>
+			<div>
+				<input type="checkbox" value="Matej" id="checkbox_sofija" />
+				<a onclick="changeCheckbox('checkbox_sofija');">
+					<img src="res/sofija.png" alt="sofija" height="200" width="200" />
+				</a>
+			</div>
+			<div>
+				<input type="button" value="Kreni!!!!!" onclick="init()" />
+			</div>
+		</div>
+		<div id="game" style="display: none;">
+			<header id="header">
+				<p id="replay"></p>
+			</header>
+			<canvas id="myCanvas" width="700" height="750"></canvas>
+		</div>
+	</body>
+</html>
